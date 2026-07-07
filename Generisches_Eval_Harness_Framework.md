@@ -293,6 +293,14 @@ Eine aktuelle Sicherheitsanalyse zu selbst-evolvierenden Agenten-Systemen bestä
 
 ## 10. Coding-Agent-Patch-Mode — Eval-System als Baseline-Trainer
 
+**Hinweis zur Aktualität:** Dieser Abschnitt beschreibt das ursprüngliche Konzept. Die verbindliche, laufend gepflegte Version — inklusive Status (zurückgestellt, abhängig vom ROI-Nachweis von Modus A) und Evidenz-Einstufung pro Referenz — steht in [Golden_Quality_Setup.md § Coding Agent Patch Mode](Golden_Quality_Setup.md#coding-agent-patch-mode). Bei Widersprüchen gilt die dortige Fassung.
+
+Kurz zur Evidenzlage, damit die Referenzen unten nicht überzeugender wirken als sie sind:
+
+- TDAD, Kitchen Loop: einzelne 2026-Preprints, unrepliziert — TDADs 12%→60%-Zahl stammt aus einer 10-Instanzen-Teilmenge
+- Darwin Gödel Machine, Huxley-Gödel Machine: reale Ergebnisse, aber sehr hoher Rechenaufwand, begrenzte unabhängige Replikation
+- SWE-bench, SWE-agent: solide, breit repliziert
+
 Für Coding Agents ist der wichtigste Spezialfall nicht nur Prompt-/Config-Evolution, sondern ein echter Patch-Loop:
 
 ```

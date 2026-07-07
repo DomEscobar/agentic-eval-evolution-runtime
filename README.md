@@ -18,6 +18,8 @@ Mode B: Coding Agent Patch Loop
 repo snapshot -> coding agent -> code patch -> tests/benchmark -> rollback or promote
 ```
 
+The governing thesis: **agents are replaceable, evals are the control plane.** Agents, scaffolds, and models are disposable variation producers; the eval system — specs, hidden tests, regression oracle, archive, promotion/rollback — is the durable selection layer and the only part of the stack that gains value across model generations. Target shape: framework-light, eval-heavy, adapter-based, agent-agnostic. The full argument and the three-layer architecture live in [Golden_Quality_Setup.md § Architecture Thesis](Golden_Quality_Setup.md#architecture-thesis-evals-are-the-control-plane).
+
 This repository is currently an architecture and research package. It does not yet contain runnable implementation code.
 
 ![Generic eval harness architecture](generic_eval_harness_architecture.png)
@@ -121,8 +123,6 @@ Benchmark / Spec
   -> Archive records lineage
 ```
 
-This is the mode closest to **TDAD's auto-improvement loop**, **SICA**, **Darwin Godel Machine**, and **Huxley-Godel Machine**.
-
 Key distinction:
 
 - the **eval system** is the judge, benchmark, archive, and rollback controller
@@ -131,17 +131,17 @@ Key distinction:
 
 The agent may patch application code or, in an advanced mode, its own scaffold. It must not patch the evaluator, hidden tests, guardrails, or archive.
 
-Reference safeguards to copy from TDAD:
+Evidence strength behind this mode, so it isn't read as more proven than it is:
 
-- checksum the evaluation script, e.g. SHA-256
-- set evaluator and hidden tests read-only
-- run unit tests before benchmark evaluation
-- rollback immediately on unit-test failure
-- compare every candidate against the best known snapshot
-- restore best snapshot after repeated reverts
-- report regression rate as a first-class metric, not only resolution rate
+| Reference | Status |
+|---|---|
+| SWE-bench, SWE-agent | solid — replicated, widely used benchmark substrate |
+| DSPy, GEPA | solid — mature, production-used optimizers |
+| Darwin Godel Machine | directional — real results, but extreme compute cost |
+| TDAD | speculative — single 2026 preprint, 10-instance subset for its headline number |
+| Kitchen Loop | speculative — single 2026 preprint, unreplicated |
 
-The strongest counterpoint comes from the Kitchen Loop: do not treat "benchmark reached" as the whole definition of done. Anchor the loop to a specification surface and regression oracle so the system converges toward product behavior, not just a proxy score.
+Full safeguards, phasing, and the archive/rollback design live in [Golden_Quality_Setup.md § Coding Agent Patch Mode](Golden_Quality_Setup.md#coding-agent-patch-mode) — treated there as **deferred, contingent on Mode A proving ROI**, not a parallel effort.
 
 ## Repository Map
 
@@ -227,7 +227,7 @@ Questions this repo answers:
 
 ### 1. TaskAdapter
 
-Each app implements a small adapter.
+Each app implements a small adapter. Keep the v1 contract to four methods; do not add `get_layer_boundaries()` or `get_coupling_constraints()` until a real coupling constraint shows up in the first adapter. Designing those two in the abstract, before a second app exists to validate the shape, is how generic layers end up wrong.
 
 ```python
 class TaskAdapter(Protocol):
@@ -237,12 +237,6 @@ class TaskAdapter(Protocol):
     def get_config_schema(self) -> dict:
         ...
 
-    def get_layer_boundaries(self) -> list[str]:
-        ...
-
-    def get_coupling_constraints(self) -> list[dict]:
-        ...
-
     def validate_config(self, config: dict) -> list[ConstraintViolation]:
         ...
 
@@ -250,7 +244,7 @@ class TaskAdapter(Protocol):
         ...
 ```
 
-The adapter is the only part that should be rewritten for each AI application.
+The adapter is the only part that should be rewritten for each AI application. Layer boundaries and coupling constraints belong on this contract eventually — add them the moment the MUCi adapter needs one, not before.
 
 ### 2. Golden Datasets
 
@@ -347,32 +341,29 @@ Build these locally:
 
 ## First Milestone
 
-The first useful implementation should be one of two tracks.
+The first useful implementation is a single sequential path, not two parallel tracks. Generic interfaces are cheap to design and expensive to un-wrongly-generalize, so the plan below delays them until a manual baseline has proven the mutation loop is worth automating.
 
-### Track A: Generic Runtime Core
+### Path: Mode A first, with a falsification gate
 
-1. typed interfaces for cases, results, metrics, adapters, and archive events
-2. one real RAG/MUCi adapter
-3. JSONL dataset loading for train, validation, holdout, and redteam splits
-4. deterministic metrics first
-5. archive written to SQLite or JSONL
-6. simple report generator
-7. one GEPA-lite mutator over prompt/config text
-8. hard guardrail disqualification before scoring
+1. Build the golden dataset for one real RAG/MUCi adapter: train, validation, holdout, redteam splits, with real labeled cases, not placeholders.
+2. Implement that one adapter directly against a small eval script. Do not build the generic `TaskAdapter`/`Archive` interfaces yet.
+3. Add deterministic metrics and hard guardrail disqualification before scoring.
+4. Run a **manual mutation baseline**: an engineer reads failure traces, edits the config/prompt by hand, re-runs, and records cost and iteration count in the archive (JSONL is enough).
+5. Only after step 4 exists, build the GEPA-lite mutator, and require it to beat the manual baseline on cost per point of validation-score improvement. If it doesn't, the mutator is not worth maintaining yet — say so and stop.
+6. Extract typed interfaces (`EvalCase`, `RunResult`, `Metric`, `TaskAdapter`, `Archive`) only once a **second** real adapter (non-RAG) needs them. An abstraction extracted from one example is usually wrong.
 
-### Track B: Coding Agent Patch Loop
+Do not start with a dashboard. A CLI plus reproducible archive is the right first shape.
+
+### Coding Agent Patch Loop: deferred, contingent on Mode A
+
+Treat this as a separate, later effort, not a parallel track. It carries higher engineering cost (sandboxing, snapshot management, evaluator protection) and thinner evidence than Mode A — see the evidence tags in [Coding Agent Patch Mode](#coding-agent-patch-mode) above. Only start it once Mode A has shipped and proven the archive/gate/rollback pattern on the simpler config-mutation case.
 
 1. task spec with repo snapshot and expected baseline
 2. sandboxed coding-agent runner
-3. protected evaluator and hidden tests
-4. SHA-256 checksum for evaluator scripts
-5. unit-test gate before benchmark eval
-6. rollback on unit-test failure or regression
-7. best-snapshot promotion
-8. archive of patches, logs, scores, regressions, and lineage
-9. specification/regression oracle inspired by Kitchen Loop
-
-Do not start with a dashboard. A CLI plus reproducible archive is the right first shape for both tracks.
+3. protected evaluator and hidden tests, SHA-256 checksummed
+4. unit-test gate before benchmark eval, rollback on failure or regression
+5. best-snapshot promotion and archive of patches, logs, scores, regressions, lineage
+6. specification/regression oracle inspired by Kitchen Loop
 
 ## Research Sources
 

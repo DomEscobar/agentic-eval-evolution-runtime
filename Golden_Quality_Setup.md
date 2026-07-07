@@ -2,18 +2,63 @@
 
 This is the recommended target setup after comparing the current framework concept with the GitHub/arXiv research artifacts in `research/2026-07-07-agentic-eval-runtime/`.
 
+## Architecture Thesis: Evals Are the Control Plane
+
+**Agents are replaceable. Evals are the control plane.**
+
+Agents, scaffolds, models, and prompts are all interchangeable and will be obsolete within months. The eval system is the only part of the stack that gains value across model generations instead of losing it. This is also why agent frameworks feel like handcuffs: they dictate an agent loop, but the loop should be controlled by evals, not by framework abstractions.
+
+Target shape: **framework-light, eval-heavy, adapter-based, agent-agnostic.**
+
+```text
+Agent Runtime Layer          (data plane — variation)
+  - any coding / tool / RAG agents
+  - interchangeable, disposable
+  - produces candidate variants
+
+Eval Control Plane           (control plane — selection)
+  - defines tasks and specs
+  - runs agents, measures results
+  - protects hidden tests and guardrails
+  - decides promote / rollback, enforces budgets and convergence
+  - archives lineage
+
+Integration Layer            (the boundary both sides talk through)
+  - adapters for agents A, B, C
+  - adapters for repo / test systems
+  - adapters for metrics
+```
+
+The division of labor is Darwinian: the runtime layer produces variation, the control plane performs selection. An agent that produces variants is harmless as long as it can neither see nor touch the selection criteria. The integration layer is where that isolation is physically enforced — an adapter hands the agent the task, the repo snapshot, and visible tests, and nothing else. Hidden tests, guardrails, and promotion thresholds never cross the adapter boundary toward the agent.
+
+### The Moat
+
+What accumulates and defends this system, in order of defensibility:
+
+Data (grows through operation, cannot be rebuilt from scratch):
+
+- task/spec definitions
+- hidden tests
+- regression oracle cases
+- golden datasets
+- patch archive with full lineage
+
+Code (necessary, but replicable in weeks — not the moat itself):
+
+- benchmark harness
+- rollback/promotion logic
+- anti-gaming guardrail enforcement
+- adapters
+
+Cross-agent comparability is not a separate asset: it falls out automatically once specs, harness, and metrics are stable. It is the payoff of the list above, and the reason an eval control plane makes "modular, interchangeable agents" a measurable property instead of an architecture aesthetic.
+
+### Framework Rule
+
+External tools (DeepEval, RAGAS, GEPA, DSPy, ...) are used as **libraries**: we call them, behind our own contracts, and can discard them. The line is crossed when a framework dictates how the agent must learn, patch, or evaluate — the moment it calls us, it becomes a handcuff. Concretely: no third-party type may appear in the adapter contract, the archive schema, or the spec format.
+
 ## Verdict
 
-Do not rebuild the whole eval ecosystem. Build a thin, opinionated adapter/runtime layer and plug mature tools into it.
-
-The valuable part of this project is not a generic eval runner. The valuable part is:
-
-- app-specific adapter quality
-- explicit coupling constraints
-- trace capture for diagnosis
-- immutable guardrail separation
-- archive and convergence logic
-- domain-specific golden datasets
+Do not rebuild the whole eval ecosystem. Build a thin, opinionated adapter/runtime layer and plug mature tools into it — as libraries, per the Framework Rule above. What is worth owning and what merely needs assembling is defined by [The Moat](#the-moat): the data assets (specs, hidden tests, datasets, lineage) are the project; the harness code around them is scaffolding.
 
 The golden setup is:
 
@@ -27,7 +72,7 @@ TaskAdapter
   + strict train / validation / holdout / redteam split
 ```
 
-For coding agents, add a dedicated patch loop:
+For coding agents, a dedicated patch loop is the eventual second track — see [Coding Agent Patch Mode](#coding-agent-patch-mode) for why this is deferred until Mode A ships:
 
 ```text
 Benchmark / Spec
@@ -69,7 +114,7 @@ Use existing tools where they are already strong:
 
 ## Adapter Contract
 
-The current four-method adapter is a good start, but the production version should include config validation and trace extraction.
+Keep the v1 contract to four methods. `validate_config()` prevents invalid candidates from entering the eval loop. `extract_trace()` gives the mutator useful diagnostics instead of only scalar scores.
 
 ```python
 class TaskAdapter(Protocol):
@@ -79,12 +124,6 @@ class TaskAdapter(Protocol):
     def get_config_schema(self) -> dict:
         ...
 
-    def get_layer_boundaries(self) -> list[str]:
-        ...
-
-    def get_coupling_constraints(self) -> list[dict]:
-        ...
-
     def validate_config(self, config: dict) -> list[ConstraintViolation]:
         ...
 
@@ -92,7 +131,7 @@ class TaskAdapter(Protocol):
         ...
 ```
 
-`validate_config()` prevents invalid candidates from entering the eval loop. `extract_trace()` gives the mutator useful diagnostics instead of only scalar scores.
+`get_layer_boundaries()` and `get_coupling_constraints()` are deferred, not dropped. Add them once the first real adapter surfaces an actual coupling constraint (e.g. late chunking requiring a long-context embedding model). Designing that schema before it's needed means guessing its shape, and guesses baked into a "generic" interface are expensive to unwind once a second adapter exists.
 
 ## Dataset Layout
 
@@ -129,6 +168,25 @@ datasets/
 ```
 
 For non-RAG adapters, keep the same outer schema and put domain-specific fields into `additional_context`.
+
+## Dataset Economics
+
+This is the real budget item in this plan, and it doesn't amortize across apps the way the runtime code does. Every new `TaskAdapter` needs its own golden dataset built from scratch.
+
+Rough cost, per app:
+
+- 150–300 labeled cases per statistical metric (recall, F1, accuracy) for a stable average
+- 30–60 cases for trajectory/checkpoint-compliance coverage
+- 20–50 cases for structural/binary checks (schema, format)
+- a redteam set that needs periodic renewal, since cases the mutator has effectively "seen" through repeated exposure lose their holdout value
+
+Ownership and process, decide before writing code:
+
+- who authors and reviews cases — an engineer guessing at expected outputs is not equivalent to a domain reviewer confirming them
+- how holdout stays uncontaminated as the product evolves — new production failures should feed `train`/`validation`, not silently leak into `holdout`
+- a versioning rule for the datasets themselves, since a "config that passed holdout" claim is meaningless if holdout quietly changed underneath it
+
+Treat dataset construction as milestone 1, not as an input the interfaces will need "later." Costing it up front is what makes the manual-baseline-before-mutator gate (see Implementation Order) honest instead of hand-wavy.
 
 ## Evaluation Order
 
@@ -176,6 +234,8 @@ For coding-agent patch mode, do not use "resolved issue" as the only success met
 10% code quality / static checks
  5% cost and latency
 ```
+
+Any fixed-weight composite is itself a proxy metric and can be gamed the same way the framework warns about for guardrails. Use it for human-readable ranking only. For candidate *selection*, keep the per-metric score vector and select Pareto-optimal candidates (dominant on no single axis, not dominated on all axes) — this is what GEPA already does and avoids one metric silently outweighing the others as weights drift.
 
 Hard gates for coding agents:
 
@@ -294,6 +354,8 @@ epsilon = 0.01
 min_candidates_before_convergence = 10
 ```
 
+`epsilon = 0.01` will trigger on LLM-judge noise long before it detects a real plateau once judge-based metrics are in the composite. Require a bootstrap confidence interval on the best score before declaring convergence: a candidate only counts as "improved" if its score's CI does not overlap the previous best's CI. Without this, the loop will report false plateaus and false improvements at roughly the same rate.
+
 ## Release Gate
 
 A candidate is deployable only if:
@@ -316,18 +378,32 @@ For coding agents, also require:
 
 ## Implementation Order
 
-1. Build the typed interfaces: `EvalCase`, `RunResult`, `Metric`, `TaskAdapter`, `Archive`.
-2. Implement one RAG/MUCi adapter.
-3. Add train/validation/holdout/redteam dataset loading.
-4. Add deterministic metrics first: schema validity, exact match, token F1, recall@k, cost, latency.
-5. Add RAGAS/ARES-style RAG metrics.
-6. Add LLM-as-judge metrics only behind explicit config and separate judge model.
-7. Add archive and report generation.
-8. Add a GEPA-lite mutator over config JSON and prompt text.
-9. Add guardrail isolation and disqualification checks.
-10. Add a second non-RAG adapter to prove the abstraction.
+Dataset and a falsification gate come before generic interfaces. Building `TaskAdapter`/`Archive` as typed interfaces before knowing whether the mutator earns its keep is the main way this kind of project overbuilds.
+
+1. Build the train/validation/holdout/redteam datasets for one real RAG/MUCi case, with real labeled cases.
+2. Implement that one adapter directly, without a generic interface layer yet.
+3. Add deterministic metrics first: schema validity, exact match, token F1, recall@k, cost, latency.
+4. Add RAGAS/ARES-style RAG metrics.
+5. Add guardrail isolation and hard-gate disqualification checks — before any scoring exists to game.
+6. Add a JSONL archive and a simple report generator.
+7. Run a **manual mutation baseline**: an engineer reads failures and traces, edits config by hand, records iterations and cost in the archive.
+8. Add a GEPA-lite mutator over config JSON and prompt text, and require it to beat the manual baseline's cost per point of validation-score gain before it becomes the default path.
+9. Add LLM-as-judge metrics only behind explicit config and separate judge model.
+10. Add a second non-RAG adapter. Only now extract the typed interfaces (`EvalCase`, `RunResult`, `Metric`, `TaskAdapter`, `Archive`) — the second adapter is what proves or disproves the abstraction, not step 1.
 
 ## Coding Agent Patch Mode
+
+**Status: deferred, contingent on Mode A.** Do not start this in parallel with the config/prompt evolution track (Mode A). It carries materially higher engineering cost — sandboxing, repo snapshotting, evaluator protection — and thinner evidence. Start it only after Mode A has shipped and proven the archive/gate/rollback pattern. (Note: this is independent of the internal "Phase 1–4" rollout below, which sequences work *within* this mode once it starts.)
+
+Evidence strength for the claims below, since some of the strongest-sounding numbers come from small or unreplicated sources:
+
+| Reference | Status | Why |
+|---|---|---|
+| SWE-bench, SWE-agent | solid | replicated, widely used benchmark substrate |
+| Darwin Godel Machine | directional | real reported gains (20%→50% SWE-bench), but very high compute cost, limited independent replication |
+| Huxley-Godel Machine | directional | extends DGM's archive concept, recent (2026) |
+| TDAD | speculative | single 2026 preprint; its headline 12%→60% resolution figure is measured on a **10-instance subset**, where a handful of tasks swing the result |
+| Kitchen Loop | speculative | single 2026 preprint, unreplicated, cited here mainly as a design counterweight |
 
 This is the closest match to Dom's original point: an eval system helps a coding agent reach a baseline by repeatedly producing patches.
 
