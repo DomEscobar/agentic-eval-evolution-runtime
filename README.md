@@ -246,7 +246,7 @@ class TaskAdapter(Protocol):
 
 The adapter is the only part that should be rewritten for each AI application. Layer boundaries and coupling constraints belong on this contract eventually — add them the moment the MUCi adapter needs one, not before.
 
-`extract_trace()` returns traces in OpenTelemetry GenAI semantic-convention shape — vendor-neutral, so production and eval share one trace format. Rationale and the explicitly deferred monitoring stack: [Golden_Quality_Setup.md § Trace Format](Golden_Quality_Setup.md#trace-format).
+`extract_trace()` returns traces in OpenTelemetry GenAI semantic-convention shape — vendor-neutral, so production and eval share one trace format. Rationale, tooling recommendation (Langfuse self-hosted for production, none/Phoenix for dev), and the production privacy policy (metadata-only by default, content capture opt-in): [Golden_Quality_Setup.md § Trace Format](Golden_Quality_Setup.md#trace-format).
 
 ### 2. Golden Datasets
 

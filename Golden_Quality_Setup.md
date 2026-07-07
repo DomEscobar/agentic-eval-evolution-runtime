@@ -147,6 +147,31 @@ Explicitly deferred: the operational monitoring stack (collector, Prometheus/Jae
 
 Caveat: the GenAI semantic conventions are still marked experimental upstream. Pin the semconv version in the adapter, and treat attribute renames as an adapter concern — they must not leak into the archive schema.
 
+### Trace Tooling
+
+Because instrumentation is OTel, the backend is a swappable, low-stakes choice — that is the point of pinning the format. Current recommendation:
+
+- **Development / eval runs:** no backend. The adapter captures spans in-process; optionally Phoenix (`pip install arize-phoenix`, single process) for a local trace UI.
+- **Emitter:** OpenLIT-style auto-instrumentation (two lines), pointed at whatever OTLP endpoint is configured.
+- **Production:** Langfuse, self-hosted (MIT core, OTLP ingestion, full feature parity self-hosted). Chosen over LangSmith (proprietary, LangChain-coupled — fails the Framework Rule) and over the OpenLIT UI (observing only; Langfuse supports the trace-to-golden-case workflow: filter, annotate, convert failures into dataset cases).
+
+Boundary rule: Langfuse ships its own eval features (datasets, judges, experiments). **Do not use them as the control plane.** The observability tool sees traces; specs, hidden tests, gates, promotion/rollback, and the archive remain our own code and schema. The moment the release gate reads the observability tool's dataset format instead of ours, the tool has become a framework.
+
+### Production Tracing and Privacy
+
+"We cannot trace in production" usually conflates two different things. The distinction:
+
+- **Metadata tracing** — latency, token counts, cost, model name, error codes, retrieved document IDs, scores, guardrail results. No content, no personal data. This is what operational observability needs, and it is the OTel default.
+- **Content capture** — prompts and completions, which can contain personal data. The OTel GenAI conventions keep content capture **off by default**; it must be enabled explicitly. The privacy-friendly configuration is the standard configuration.
+
+Production policy:
+
+1. Metadata tracing on, content capture off, backend self-hosted (data never leaves our infrastructure). Which level is permissible in a given deployment is a question for the data-protection officer, not an engineering assumption.
+2. If content is needed, use the intermediate levels: PII masking before storage (OTel collector processor or backend masking hooks), capture only with explicit user consent (e.g. a feedback action that attaches the trace), short retention.
+3. Consequence for the production-to-eval funnel: without content, production failures cannot be copied 1:1 into golden datasets. The workaround is **synthetic reconstruction** — metadata identifies where and in which category failures cluster ("retrieval returns nothing for topic X"), and the eval case is rebuilt with invented data of the same failure class. More manual work, legally clean, equally valuable to the eval loop.
+
+The eval loop itself is unaffected by any of this: it runs offline against constructed golden cases containing no real user data, so eval runs always trace at full depth, content included.
+
 ## Dataset Layout
 
 Use four datasets, not one.
