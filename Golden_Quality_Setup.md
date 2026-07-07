@@ -133,6 +133,20 @@ class TaskAdapter(Protocol):
 
 `get_layer_boundaries()` and `get_coupling_constraints()` are deferred, not dropped. Add them once the first real adapter surfaces an actual coupling constraint (e.g. late chunking requiring a long-context embedding model). Designing that schema before it's needed means guessing its shape, and guesses baked into a "generic" interface are expensive to unwind once a second adapter exists.
 
+### Trace Format
+
+The dict returned by `extract_trace()` follows the **OpenTelemetry GenAI semantic conventions** (span/event attributes for model, parameters, prompts, completions, token usage, tool calls). This is the Framework Rule applied to observability: OTel is a vendor-neutral standard, so the harness, the mutator, and the archive stay decoupled from whichever tracing SDK or agent stack sits behind the adapter.
+
+Why this is decided now, before implementation code exists:
+
+- the mutator and the archive consume traces, so a trace schema is needed on day one anyway
+- production and eval must speak the same trace format for the production-to-eval funnel to work later (production traces -> failure clusters -> new golden cases -> CI regression); retrofitting a shared format means rewriting `extract_trace()` for every adapter
+- apps instrumented with OTel-compatible auto-instrumentation (e.g. OpenLIT-style, two lines) emit this format for free; the adapter captures spans in-process and hands them to the harness — no collector or backend required for eval runs
+
+Explicitly deferred: the operational monitoring stack (collector, Prometheus/Jaeger/Grafana dashboards, request/cost counters). That answers online aggregate questions and only becomes worthwhile once Mode A runs in production, where it serves as the funnel feeding real failures into the datasets — it is not part of the eval loop itself. Cost and latency stay per-candidate fields in the archive, which is the form the gates and the mutator need.
+
+Caveat: the GenAI semantic conventions are still marked experimental upstream. Pin the semconv version in the adapter, and treat attribute renames as an adapter concern — they must not leak into the archive schema.
+
 ## Dataset Layout
 
 Use four datasets, not one.
