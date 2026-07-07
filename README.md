@@ -25,6 +25,10 @@ If you only read three things, read these in order:
 3. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
    The sourced research report behind the build-vs-buy and design recommendations.
 
+For coding-agent self-improvement specifically, also read:
+
+- [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md)
+
 ## What This Is
 
 This repo explores a generic runtime for improving AI systems without rebuilding the eval loop for every project.
@@ -61,6 +65,42 @@ In plain terms:
 - store every candidate and score in an archive
 - optimize on visible splits only
 - deploy only after holdout and redteam gates pass
+
+## Coding Agent Patch Mode
+
+For coding agents, the runtime has a second mode:
+
+```text
+Benchmark / Spec
+  -> Coding Agent proposes code patch
+  -> Unit tests gate the patch
+  -> Benchmark eval compares against best snapshot
+  -> Regression triggers rollback
+  -> Improvement updates best snapshot
+  -> Archive records lineage
+```
+
+This is the mode closest to **TDAD's auto-improvement loop**, **SICA**, **Darwin Godel Machine**, and **Huxley-Godel Machine**.
+
+Key distinction:
+
+- the **eval system** is the judge, benchmark, archive, and rollback controller
+- the **coding agent** is the patch producer
+- the **guardrail layer** protects evaluator, hidden tests, archive, and safety rules from modification
+
+The agent may patch application code or, in an advanced mode, its own scaffold. It must not patch the evaluator, hidden tests, guardrails, or archive.
+
+Reference safeguards to copy from TDAD:
+
+- checksum the evaluation script, e.g. SHA-256
+- set evaluator and hidden tests read-only
+- run unit tests before benchmark evaluation
+- rollback immediately on unit-test failure
+- compare every candidate against the best known snapshot
+- restore best snapshot after repeated reverts
+- report regression rate as a first-class metric, not only resolution rate
+
+The strongest counterpoint comes from the Kitchen Loop: do not treat "benchmark reached" as the whole definition of done. Anchor the loop to a specification surface and regression oracle so the system converges toward product behavior, not just a proxy score.
 
 ## Repository Map
 
@@ -127,6 +167,7 @@ Questions this repo answers:
 - How should optimizer-visible data be separated from holdout data?
 - How do we prevent the mutation loop from removing safety checks?
 - What should the first implementation milestone be?
+- How can a coding agent patch toward a benchmark baseline without gaming the evaluator?
 
 ## Core Design
 
@@ -211,6 +252,25 @@ Archive fields should include:
 - model versions
 - timestamp
 
+### 6. Patch Loop for Coding Agents
+
+For coding agents, the archive must also capture patch lineage:
+
+- task id
+- repo snapshot
+- patch/diff
+- changed files
+- commands run
+- visible test output
+- hidden test summary
+- benchmark score
+- regression count
+- rollback reason
+- parent snapshot
+- best snapshot at evaluation time
+
+Baseline success should require both resolution and non-regression.
+
 ## Build-vs-Buy Guidance
 
 Do not rebuild these from scratch unless there is a clear reason:
@@ -251,6 +311,7 @@ Do not start with a dashboard. A CLI plus reproducible archive is the right firs
 Primary research artifact:
 
 - [DeepResearch report](research/2026-07-07-agentic-eval-runtime/report.md)
+- [Coding-agent patch-loop research](research/2026-07-07-coding-agent-patch-loop/report.md)
 
 Key external references:
 
@@ -262,6 +323,10 @@ Key external references:
 - OPRO: https://arxiv.org/abs/2309.03409
 - TextGrad: https://arxiv.org/abs/2406.07496
 - Agentic Benchmark Checklist: https://arxiv.org/html/2507.02825v2
+- TDAD auto-improvement loop: https://arxiv.org/html/2603.17973v1
+- SICA: https://arxiv.org/html/2504.15228v2
+- Huxley-Godel Machine: https://arxiv.org/abs/2510.21614
+- Kitchen Loop: https://arxiv.org/abs/2603.25697
 
 ## Current Status
 
@@ -274,4 +339,3 @@ This repository currently contains:
 - this README
 
 It does not yet contain implementation code, package metadata, tests, or runnable examples.
-

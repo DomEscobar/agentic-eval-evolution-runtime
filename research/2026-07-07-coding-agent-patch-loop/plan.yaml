@@ -1,0 +1,45 @@
+topic: eval guided autonomous patch loop for coding agents baseline benchmarks
+created_at: '2026-07-07T07:14:58.191292+00:00'
+depth: standard
+time_range: null
+entities: []
+entities:
+- coding agents
+- SWE-bench
+- SWE-bench Verified
+- automated program repair
+- patch-and-test loops
+- self-improving agents
+- benchmark-driven code patching
+- evolutionary code search
+- holdout and benchmark contamination
+dimensions:
+- benchmark substrate
+- patch producer architecture
+- test/eval feedback loop
+- self-improvement evidence
+- archive and lineage design
+- safety and sandboxing
+- leakage/overfitting risk
+- applicability to agentic-eval-evolution-runtime
+queries:
+- arxiv self improving coding agents benchmark patch loop SWE-bench
+- arxiv autonomous software engineering agents self repair benchmark driven patch generation
+- github SWE-agent benchmark automated code patch agent
+- github OpenHands SWE-bench coding agent evaluation
+- arxiv Darwin Godel Machine self improving coding agents code patches benchmark
+- arxiv AlphaEvolve coding agent self improvement programs evolutionary code patches
+- arxiv self evolving software engineering agents Live-SWE-agent runtime self evolving
+- arxiv SWE-bench Can Language Models Resolve Real-World GitHub Issues
+- github AutoCodeRover autonomous program improvement
+source_policy:
+  max_sources: 30
+  prefer_primary: true
+  allow_browser: true
+  allow_scrapling: true
+unknowns: []
+unknowns:
+- Whether v1 should patch the target application code, the coding agent scaffold, or both.
+- Whether the first benchmark should be SWE-bench-style tasks or project-local regression tasks.
+- Required human review policy before applying generated patches to main.
+- How much autonomy is acceptable for running commands, editing files, and using network access.

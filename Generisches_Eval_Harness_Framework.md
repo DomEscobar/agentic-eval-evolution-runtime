@@ -291,6 +291,81 @@ Eine aktuelle Sicherheitsanalyse zu selbst-evolvierenden Agenten-Systemen bestä
 
 ---
 
+## 10. Coding-Agent-Patch-Mode — Eval-System als Baseline-Trainer
+
+Für Coding Agents ist der wichtigste Spezialfall nicht nur Prompt-/Config-Evolution, sondern ein echter Patch-Loop:
+
+```
+Baseline / Spezifikation
+        |
+        v
+Coding Agent erzeugt Code-Patch
+        |
+        v
+Unit Tests gate'n den Patch
+        |
+        v
+Benchmark-Eval vergleicht gegen Best-Snapshot
+        |
+        +-- Verbesserung --> Best-Snapshot aktualisieren
+        |
+        +-- Regression ----> Rollback
+        |
+        v
+Archive speichert Patch, Scores, Logs, Lineage
+```
+
+Das Eval-System patched dabei nicht selbst. Es ist Richter, Fitness-Funktion, Archiv und Rollback-Controller. Der Coding Agent ist der Patch-Produzent.
+
+**Direkter Referenzfall: TDAD Auto-Improvement Loop**
+
+TDAD beschreibt praktisch genau diesen Mechanismus:
+
+1. Ein Coding-Agent bekommt die volle Experiment-Historie
+2. Er macht eine fokussierte Änderung an den Quelldateien
+3. Unit-Tests gate'n die Akzeptanz
+4. Fehlschläge werden sofort reverted
+5. Eine SWE-bench-Teilmenge misst Generation/Resolution/Regression
+6. Verbesserungen aktualisieren den Best-Snapshot
+7. Regressionen lösen Rollback aus
+8. Laterale Moves können zur Exploration behalten werden
+
+Die wichtigsten Anti-Gaming-Safeguards aus TDAD sind direkt übernehmbar:
+
+- Eval-Skript per SHA-256 prüfen
+- Eval-Skript und Hidden Tests read-only setzen
+- Unit-Test-Fehler führen zu sofortigem Rollback
+- Regressionsrate als eigene Metrik tracken, nicht nur Resolution
+- Fünf Reverts in Folge erzwingen Restore auf den Best-Snapshot
+
+**Formale Einordnung**
+
+- **SICA (Self-Improving Coding Agent):** Agenten, die ihre eigene Codebase oder Scaffold verbessern, um Benchmark-Score, Kosten und Laufzeit zu optimieren.
+- **Darwin Gödel Machine:** baut ein Archiv von Agent-Nachkommen und selektiert Varianten anhand von Coding-Benchmarks.
+- **Huxley-Gödel Machine:** erweitert das Archive-Konzept um Clade-Metaproductivity — nicht nur "bester aktueller Score", sondern erwartetes Verbesserungspotential einer ganzen Linie.
+- **Kitchen Loop:** wichtiger Gegenpunkt zu reinem Benchmark-Optimieren. Der Loop soll zu einer Spezifikation konvergieren, nicht nur eine Proxy-Metrik maximieren.
+
+**Konsequenz für dieses Framework**
+
+Es gibt zwei Modi:
+
+1. **Config/Prompt Evolution** — für RAG, Chatbots, Klassifizierer, Tool-Routing
+2. **Code Patch Evolution** — für Coding Agents, die Code ändern, bis eine Baseline oder Spezifikation erreicht ist
+
+Für den zweiten Modus muss gelten:
+
+- Der Coding Agent darf Zielcode patchen
+- Der Coding Agent darf Eval-Harness, Hidden Tests, Guardrails und Archive nicht patchen
+- Hidden Tests und Guardrails leben außerhalb des mutierbaren Arbeitsbereichs
+- Jeder Patch wird mit Diff, Logs, Tests, Score, Kosten und Parent-Snapshot archiviert
+- Baseline-Erreichung braucht Resolution **und** Non-Regression
+
+Der sauberste Pitch-Satz:
+
+> Ein eval-guided autonomous patch loop: der Coding Agent patched, das Eval-System misst, gated, archiviert und rollt bei Regression zurück.
+
+---
+
 ## Mapping: wie verschiedene App-Typen den Adapter implementieren
 
 | App-Typ | Layer-Beispiele | Typische Metriken | Beispiel Coupling Constraint |

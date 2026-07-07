@@ -27,6 +27,18 @@ TaskAdapter
   + strict train / validation / holdout / redteam split
 ```
 
+For coding agents, add a dedicated patch loop:
+
+```text
+Benchmark / Spec
+  -> Coding Agent patches code
+  -> Unit tests gate acceptance
+  -> Benchmark eval compares to best snapshot
+  -> Regression rolls back
+  -> Improvement updates best snapshot
+  -> Archive tracks lineage and clade potential
+```
+
 ## Recommended Stack
 
 ### Own code
@@ -52,6 +64,8 @@ Use existing tools where they are already strong:
 - **DSPy / MIPRO-style optimization** when the app can be expressed as signatures/modules.
 - **GEPA-style reflective optimization** for prompt/config mutation from traces and failure examples.
 - **promptfoo** for optional CI, red-team, provider, and prompt-regression workflows.
+- **SWE-bench / SWE-bench Verified** as reference benchmark shape for coding-agent patch tasks.
+- **TDAD-style impact analysis** for regression-aware coding-agent patch loops.
 
 ## Adapter Contract
 
@@ -153,6 +167,26 @@ For classifiers, replace retrieval/faithfulness with F1, accuracy, calibration, 
 
 For coding agents, replace retrieval/faithfulness with test pass rate, patch correctness, diff size, and sandbox compliance.
 
+For coding-agent patch mode, do not use "resolved issue" as the only success metric. Include regression safety as a first-class metric:
+
+```text
+60% issue resolution / correctness
+15% regression safety
+10% patch minimality
+10% code quality / static checks
+ 5% cost and latency
+```
+
+Hard gates for coding agents:
+
+- evaluator checksum unchanged
+- hidden tests unchanged
+- guardrails unchanged
+- archive unchanged
+- no forbidden files changed
+- unit tests pass before benchmark eval
+- repeated failures trigger rollback to best snapshot
+
 ## Mutator Contract
 
 The mutator may see:
@@ -219,6 +253,23 @@ Each archive event should include:
 
 The archive is not just bookkeeping. It is what prevents repeated failed mutations and allows later analysis of why a config won.
 
+For coding-agent patch loops, archive lineage matters even more. Store:
+
+- repo snapshot
+- patch/diff
+- changed files
+- commands run
+- visible test results
+- hidden test summary
+- benchmark score
+- regression count
+- rollback reason
+- parent snapshot
+- best snapshot
+- mutation rationale
+
+Huxley-Godel Machine adds a useful refinement: do not only track the best current node. Track which lineage or clade has the best future improvement potential.
+
 ## Convergence
 
 Stop when any hard budget is exhausted:
@@ -256,6 +307,13 @@ A candidate is deployable only if:
 - judge model is separate from generator model
 - full archive and report are reproducible
 
+For coding agents, also require:
+
+- no evaluator, benchmark, hidden-test, or guardrail files changed
+- regression count does not increase
+- benchmark score improves against the best snapshot or the patch is explicitly marked exploratory
+- rollback path is tested
+
 ## Implementation Order
 
 1. Build the typed interfaces: `EvalCase`, `RunResult`, `Metric`, `TaskAdapter`, `Archive`.
@@ -269,6 +327,43 @@ A candidate is deployable only if:
 9. Add guardrail isolation and disqualification checks.
 10. Add a second non-RAG adapter to prove the abstraction.
 
+## Coding Agent Patch Mode
+
+This is the closest match to Dom's original point: an eval system helps a coding agent reach a baseline by repeatedly producing patches.
+
+The strongest direct reference is TDAD's auto-improvement loop:
+
+- the coding agent receives experiment history
+- it makes one focused source change
+- unit tests gate acceptance
+- failures are immediately reverted
+- SWE-bench-style benchmark eval compares generation/resolution rates
+- improvements update the best snapshot
+- regressions trigger rollback
+- evaluator script is SHA-256 checksummed and read-only
+- five consecutive reverts force restore to the best snapshot
+
+This maps almost directly onto this framework:
+
+```text
+Eval system = benchmark, test gate, archive, rollback controller
+Coding agent = patch producer
+Guardrail layer = protects evaluator, hidden tests, archive, and safety rules
+```
+
+SICA and Darwin Godel Machine support the stronger version where the agent edits its own scaffold. Huxley-Godel Machine refines the archive concept by optimizing for clade metaproductivity: the expected future performance of a lineage, not only the score of the current node.
+
+Kitchen Loop adds the important counterweight: do not optimize only for a benchmark score. Define a specification surface and regression oracle so the loop converges toward intended product behavior rather than Goodharting a proxy metric.
+
+Recommended phases:
+
+```text
+Phase 1: agent patches target application code toward project-local baseline
+Phase 2: agent proposes scaffold/tooling changes as reviewable PRs
+Phase 3: benchmark selects better scaffold variants
+Phase 4: DGM/HGM-style open-ended self-improvement with lineage archive
+```
+
 ## Sources
 
 - DeepResearch artifact: `research/2026-07-07-agentic-eval-runtime/report.md`
@@ -281,3 +376,8 @@ A candidate is deployable only if:
 - OPRO: https://arxiv.org/abs/2309.03409
 - TextGrad: https://arxiv.org/abs/2406.07496
 - Agentic Benchmark Checklist: https://arxiv.org/html/2507.02825v2
+- Coding-agent patch-loop research: `research/2026-07-07-coding-agent-patch-loop/report.md`
+- TDAD: https://arxiv.org/html/2603.17973v1
+- SICA: https://arxiv.org/html/2504.15228v2
+- Huxley-Godel Machine: https://arxiv.org/abs/2510.21614
+- Kitchen Loop: https://arxiv.org/abs/2603.25697
