@@ -1,0 +1,47 @@
+topic: eval dataset quality for agentic runtimes golden datasets holdout guardrails
+created_at: '2026-07-07T19:41:02.756914+00:00'
+depth: standard
+time_range: null
+entities: []
+entities:
+- EvalSpec
+- golden datasets
+- agentic benchmark quality
+- holdout sets
+- redteam sets
+- generated QA datasets
+- benchmark leakage
+- contamination resistance
+- human verification
+- regression oracle
+dimensions:
+- task validity
+- outcome validity
+- hidden test quality
+- split and contamination policy
+- oracle quality
+- production representativeness
+- generated-data risks
+- trace/component/e2e layering
+- guardrail disqualification
+- reporting and reproducibility
+queries:
+- arxiv Agentic Benchmark Checklist benchmark validity reward hacking agent evaluation
+- arxiv SWE-bench Verified human filtered dataset test correctness solvability
+- arxiv Data contamination LLM benchmark evaluation leakage holdout
+- arxiv benchmark overfitting LLM agents evaluation hidden tests
+- OpenAI Evals build evals best practices datasets graders official
+- DeepEval documentation dataset evaluation LLM test cases metrics
+- RAGAS documentation testset generation metrics evaluation dataset
+- LangSmith agent evaluation dataset error analysis official
+source_policy:
+  max_sources: 30
+  prefer_primary: true
+  allow_browser: true
+  allow_scrapling: true
+unknowns: []
+unknowns:
+- No real project dataset exists yet in the repo, so quality can only be judged at the design level.
+- Exact first target domain is still open: RAG/MUCi, API, or coding-agent patch loop.
+- Human review workflow and ownership for labels/oracles are not yet defined.
+- Privacy constraints for production-derived cases are deployment-specific.

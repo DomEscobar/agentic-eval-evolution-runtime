@@ -37,7 +37,10 @@ Read these first:
 3. [EvalSpec_Guide.md](EvalSpec_Guide.md)  
    The portable spec format for generating QA cases, golden datasets, component checks, trace checks, and guardrails.
 
-4. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
+4. [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md)  
+   The audit checklist for deciding whether a generated eval dataset is actually trustworthy.
+
+5. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
    The sourced research report behind the generic eval/runtime architecture.
 
 For coding-agent self-improvement, read this too:
@@ -153,6 +156,7 @@ Full safeguards, phasing, and the archive/rollback design live in [Golden_Qualit
 | [README.md](README.md) | Human and agent orientation |
 | [Golden_Quality_Setup.md](Golden_Quality_Setup.md) | Best recommended architecture and implementation order |
 | [EvalSpec_Guide.md](EvalSpec_Guide.md) | Portable spec for generating QA and eval datasets |
+| [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md) | Audit checklist for dataset trustworthiness |
 | [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) | Original German framework document |
 | [generic_eval_harness_architecture.png](generic_eval_harness_architecture.png) | Architecture diagram |
 | [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) | Sourced research synthesis |
@@ -163,6 +167,7 @@ Full safeguards, phasing, and the archive/rollback design live in [Golden_Qualit
 | [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) | Coding-agent patch-loop research |
 | [research/2026-07-07-coding-agent-patch-loop/sources.jsonl](research/2026-07-07-coding-agent-patch-loop/sources.jsonl) | Patch-loop source inventory |
 | [research/2026-07-07-coding-agent-patch-loop/evidence.jsonl](research/2026-07-07-coding-agent-patch-loop/evidence.jsonl) | Patch-loop evidence rows |
+| [research/2026-07-07-eval-dataset-quality/report.md](research/2026-07-07-eval-dataset-quality/report.md) | Eval dataset quality research |
 
 ## Agent Quickstart
 
@@ -171,11 +176,13 @@ When an agent works in this repo:
 1. Read [Golden_Quality_Setup.md](Golden_Quality_Setup.md) first.
 2. Read [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) for the original design intent.
 3. Read [EvalSpec_Guide.md](EvalSpec_Guide.md) before generating QA cases, golden datasets, or benchmark tasks.
-4. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
-5. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
-6. Treat guardrail isolation as non-negotiable.
-7. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
-8. If adding implementation code, keep the first version adapter-first and small.
+4. Use [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md) before calling a dataset good.
+5. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
+6. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
+7. Use [research/2026-07-07-eval-dataset-quality/report.md](research/2026-07-07-eval-dataset-quality/report.md) before making claims about dataset quality.
+8. Treat guardrail isolation as non-negotiable.
+9. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
+10. If adding implementation code, keep the first version adapter-first and small.
 
 Useful first implementation target:
 
@@ -216,8 +223,9 @@ Best reading path:
 1. Read the [Golden Quality Setup](Golden_Quality_Setup.md) for the target design.
 2. Skim the [framework concept](Generisches_Eval_Harness_Framework.md) to understand the abstraction.
 3. Read the [EvalSpec guide](EvalSpec_Guide.md) to understand how QA cases and datasets are generated.
-4. Use the [generic research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended eval tools were chosen.
-5. Use the [coding-agent research report](research/2026-07-07-coding-agent-patch-loop/report.md) for TDAD, SICA, DGM, HGM, SWE-bench, and Kitchen Loop context.
+4. Read the [Dataset Quality Checklist](Dataset_Quality_Checklist.md) to understand when a dataset is trustworthy.
+5. Use the [generic research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended eval tools were chosen.
+6. Use the [coding-agent research report](research/2026-07-07-coding-agent-patch-loop/report.md) for TDAD, SICA, DGM, HGM, SWE-bench, and Kitchen Loop context.
 
 Questions this repo answers:
 
@@ -403,6 +411,7 @@ This repository currently contains:
 - architecture image
 - generic eval/runtime research artifact
 - coding-agent patch-loop research artifact
+- eval dataset quality research artifact
 - recommended golden setup
 - this README
 

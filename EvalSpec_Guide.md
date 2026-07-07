@@ -462,6 +462,8 @@ trace_checks:
 
 ## Quality Rules for Generated Cases
 
+For the full audit checklist, use [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md).
+
 A generated case is acceptable only if it has:
 
 - clear purpose
@@ -545,4 +547,3 @@ No third-party framework types should appear in:
 - promotion/rollback rules
 
 Adapters may call external tools. Specs should not depend on them.
-

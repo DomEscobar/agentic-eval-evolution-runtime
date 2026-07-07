@@ -178,6 +178,8 @@ Use four datasets, not one.
 
 Dataset generation and QA-case generation are governed by [EvalSpec_Guide.md](EvalSpec_Guide.md). The important rule from that guide is: **black-box outcome first, white-box diagnostics second**. E2E cases decide promotion; component and trace checks explain failures; guardrails disqualify unsafe variants.
 
+Dataset trust is audited with [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md). Do not call a dataset good until it has oracles, deterministic fixtures, split hygiene, leakage checks, and review confidence.
+
 ```text
 datasets/
   train.jsonl       # visible to optimizer; used for feedback
