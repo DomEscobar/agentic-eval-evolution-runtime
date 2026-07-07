@@ -1,31 +1,41 @@
 # Agentic Eval Evolution Runtime
 
-A concept and research repository for a reusable evaluation-and-optimization runtime for AI applications.
+A research and architecture repository for eval-guided improvement loops.
 
-The core idea: keep the app-specific part small, then reuse the same generic loop for evaluation, mutation, archiving, convergence, and guarded deployment.
+The core idea is simple:
 
 ```text
-AI app -> TaskAdapter -> Eval Harness -> Metrics -> Mutator -> Archive -> Holdout Gate
+system variant -> eval -> score/trace -> patch or mutate -> archive -> gate -> repeat
 ```
 
-This repository is currently an architecture and research package, not an implementation package yet.
+This can run in two modes:
+
+```text
+Mode A: Config / Prompt Evolution
+AI app config -> TaskAdapter -> eval harness -> mutator -> better config
+
+Mode B: Coding Agent Patch Loop
+repo snapshot -> coding agent -> code patch -> tests/benchmark -> rollback or promote
+```
+
+This repository is currently an architecture and research package. It does not yet contain runnable implementation code.
 
 ![Generic eval harness architecture](generic_eval_harness_architecture.png)
 
 ## Start Here
 
-If you only read three things, read these in order:
+Read these first:
 
 1. [Golden_Quality_Setup.md](Golden_Quality_Setup.md)  
-   The recommended target architecture after comparing the framework idea with current GitHub and arXiv research.
+   The target architecture, implementation order, eval gates, and coding-agent patch-loop additions.
 
 2. [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md)  
-   The original framework concept: app-specific `TaskAdapter`, generic harness, mutator, archive, convergence, and guardrails.
+   The main framework document, now including section 10 on coding-agent patch mode.
 
 3. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
-   The sourced research report behind the build-vs-buy and design recommendations.
+   The sourced research report behind the generic eval/runtime architecture.
 
-For coding-agent self-improvement specifically, also read:
+For coding-agent self-improvement, read this too:
 
 - [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md)
 
@@ -33,15 +43,33 @@ For coding-agent self-improvement specifically, also read:
 
 This repo explores a generic runtime for improving AI systems without rebuilding the eval loop for every project.
 
-The runtime should work across app types:
+The runtime has two related jobs.
+
+### Mode A: Config / Prompt Evolution
+
+Use this when the target system is an AI app whose behavior can be improved by changing prompts, configs, retrieval parameters, routing choices, model choices, or similar runtime settings.
+
+Examples:
 
 - RAG systems
 - classifiers
-- coding agents
 - chatbots
 - tool-using agents
 
-Only the `TaskAdapter` changes per app. The rest should be reusable.
+The app implements a `TaskAdapter`. The eval loop, archive, mutator, convergence logic, and guardrails remain reusable.
+
+### Mode B: Coding Agent Patch Loop
+
+Use this when the target system is a codebase and a coding agent is allowed to produce patches until a benchmark, specification, or baseline gate is reached.
+
+Examples:
+
+- fixing project-local regression suites
+- resolving SWE-bench-style issues
+- improving a coding-agent scaffold
+- comparing candidate agent/tooling variants
+
+The eval system is the judge. The coding agent is the patch producer.
 
 ## The Golden Setup
 
@@ -65,6 +93,19 @@ In plain terms:
 - store every candidate and score in an archive
 - optimize on visible splits only
 - deploy only after holdout and redteam gates pass
+
+For coding agents, add:
+
+```text
+Task / Spec
+  -> Repo Snapshot
+  -> Coding Agent
+  -> Patch
+  -> Unit Tests
+  -> Benchmark / Regression Oracle
+  -> Promote or Roll Back
+  -> Archive Lineage
+```
 
 ## Coding Agent Patch Mode
 
@@ -115,6 +156,9 @@ The strongest counterpoint comes from the Kitchen Loop: do not treat "benchmark 
 | [research/2026-07-07-agentic-eval-runtime/sources.jsonl](research/2026-07-07-agentic-eval-runtime/sources.jsonl) | Source inventory |
 | [research/2026-07-07-agentic-eval-runtime/evidence.jsonl](research/2026-07-07-agentic-eval-runtime/evidence.jsonl) | URL-backed claims |
 | [research/2026-07-07-agentic-eval-runtime/pages.jsonl](research/2026-07-07-agentic-eval-runtime/pages.jsonl) | Fetched source page text |
+| [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) | Coding-agent patch-loop research |
+| [research/2026-07-07-coding-agent-patch-loop/sources.jsonl](research/2026-07-07-coding-agent-patch-loop/sources.jsonl) | Patch-loop source inventory |
+| [research/2026-07-07-coding-agent-patch-loop/evidence.jsonl](research/2026-07-07-coding-agent-patch-loop/evidence.jsonl) | Patch-loop evidence rows |
 
 ## Agent Quickstart
 
@@ -122,10 +166,11 @@ When an agent works in this repo:
 
 1. Read [Golden_Quality_Setup.md](Golden_Quality_Setup.md) first.
 2. Read [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) for the original design intent.
-3. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about external tools or research.
-4. Treat guardrail isolation as non-negotiable.
-5. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, or promptfoo already cover the need.
-6. If adding implementation code, keep the first version adapter-first and small.
+3. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
+4. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
+5. Treat guardrail isolation as non-negotiable.
+6. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
+7. If adding implementation code, keep the first version adapter-first and small.
 
 Useful first implementation target:
 
@@ -149,6 +194,14 @@ aer mutate --adapter path.to.Adapter --config config.yaml --dataset datasets/tra
 aer report --archive runs/latest/archive.sqlite
 ```
 
+Suggested coding-agent CLI:
+
+```text
+aer patch-loop --repo path/to/repo --task tasks/001.yaml --baseline baseline.yaml
+aer promote --archive runs/latest/archive.sqlite --candidate cand_042
+aer rollback --archive runs/latest/archive.sqlite --to-best
+```
+
 ## Human Quickstart
 
 Use this repo as a decision guide before implementation.
@@ -157,7 +210,8 @@ Best reading path:
 
 1. Read the [Golden Quality Setup](Golden_Quality_Setup.md) for the target design.
 2. Skim the [framework concept](Generisches_Eval_Harness_Framework.md) to understand the abstraction.
-3. Use the [research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended tools were chosen.
+3. Use the [generic research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended eval tools were chosen.
+4. Use the [coding-agent research report](research/2026-07-07-coding-agent-patch-loop/report.md) for TDAD, SICA, DGM, HGM, SWE-bench, and Kitchen Loop context.
 
 Questions this repo answers:
 
@@ -293,7 +347,9 @@ Build these locally:
 
 ## First Milestone
 
-The first useful implementation should be:
+The first useful implementation should be one of two tracks.
+
+### Track A: Generic Runtime Core
 
 1. typed interfaces for cases, results, metrics, adapters, and archive events
 2. one real RAG/MUCi adapter
@@ -304,7 +360,19 @@ The first useful implementation should be:
 7. one GEPA-lite mutator over prompt/config text
 8. hard guardrail disqualification before scoring
 
-Do not start with a dashboard. A CLI plus reproducible archive is the right first shape.
+### Track B: Coding Agent Patch Loop
+
+1. task spec with repo snapshot and expected baseline
+2. sandboxed coding-agent runner
+3. protected evaluator and hidden tests
+4. SHA-256 checksum for evaluator scripts
+5. unit-test gate before benchmark eval
+6. rollback on unit-test failure or regression
+7. best-snapshot promotion
+8. archive of patches, logs, scores, regressions, and lineage
+9. specification/regression oracle inspired by Kitchen Loop
+
+Do not start with a dashboard. A CLI plus reproducible archive is the right first shape for both tracks.
 
 ## Research Sources
 
@@ -334,7 +402,8 @@ This repository currently contains:
 
 - framework concept
 - architecture image
-- research artifact
+- generic eval/runtime research artifact
+- coding-agent patch-loop research artifact
 - recommended golden setup
 - this README
 
