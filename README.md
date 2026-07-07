@@ -34,7 +34,10 @@ Read these first:
 2. [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md)  
    The main framework document, now including section 10 on coding-agent patch mode.
 
-3. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
+3. [EvalSpec_Guide.md](EvalSpec_Guide.md)  
+   The portable spec format for generating QA cases, golden datasets, component checks, trace checks, and guardrails.
+
+4. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
    The sourced research report behind the generic eval/runtime architecture.
 
 For coding-agent self-improvement, read this too:
@@ -149,6 +152,7 @@ Full safeguards, phasing, and the archive/rollback design live in [Golden_Qualit
 |---|---|
 | [README.md](README.md) | Human and agent orientation |
 | [Golden_Quality_Setup.md](Golden_Quality_Setup.md) | Best recommended architecture and implementation order |
+| [EvalSpec_Guide.md](EvalSpec_Guide.md) | Portable spec for generating QA and eval datasets |
 | [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) | Original German framework document |
 | [generic_eval_harness_architecture.png](generic_eval_harness_architecture.png) | Architecture diagram |
 | [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) | Sourced research synthesis |
@@ -166,11 +170,12 @@ When an agent works in this repo:
 
 1. Read [Golden_Quality_Setup.md](Golden_Quality_Setup.md) first.
 2. Read [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) for the original design intent.
-3. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
-4. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
-5. Treat guardrail isolation as non-negotiable.
-6. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
-7. If adding implementation code, keep the first version adapter-first and small.
+3. Read [EvalSpec_Guide.md](EvalSpec_Guide.md) before generating QA cases, golden datasets, or benchmark tasks.
+4. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
+5. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
+6. Treat guardrail isolation as non-negotiable.
+7. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
+8. If adding implementation code, keep the first version adapter-first and small.
 
 Useful first implementation target:
 
@@ -210,8 +215,9 @@ Best reading path:
 
 1. Read the [Golden Quality Setup](Golden_Quality_Setup.md) for the target design.
 2. Skim the [framework concept](Generisches_Eval_Harness_Framework.md) to understand the abstraction.
-3. Use the [generic research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended eval tools were chosen.
-4. Use the [coding-agent research report](research/2026-07-07-coding-agent-patch-loop/report.md) for TDAD, SICA, DGM, HGM, SWE-bench, and Kitchen Loop context.
+3. Read the [EvalSpec guide](EvalSpec_Guide.md) to understand how QA cases and datasets are generated.
+4. Use the [generic research report](research/2026-07-07-agentic-eval-runtime/report.md) to check why the recommended eval tools were chosen.
+5. Use the [coding-agent research report](research/2026-07-07-coding-agent-patch-loop/report.md) for TDAD, SICA, DGM, HGM, SWE-bench, and Kitchen Loop context.
 
 Questions this repo answers:
 

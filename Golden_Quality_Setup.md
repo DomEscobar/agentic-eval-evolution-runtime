@@ -176,6 +176,8 @@ The eval loop itself is unaffected by any of this: it runs offline against const
 
 Use four datasets, not one.
 
+Dataset generation and QA-case generation are governed by [EvalSpec_Guide.md](EvalSpec_Guide.md). The important rule from that guide is: **black-box outcome first, white-box diagnostics second**. E2E cases decide promotion; component and trace checks explain failures; guardrails disqualify unsafe variants.
+
 ```text
 datasets/
   train.jsonl       # visible to optimizer; used for feedback
