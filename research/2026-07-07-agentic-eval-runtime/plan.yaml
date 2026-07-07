@@ -1,0 +1,47 @@
+topic: agentic eval evolution runtime generic eval harness
+created_at: '2026-07-07T06:11:49.193254+00:00'
+depth: standard
+time_range: null
+entities: []
+entities:
+- generic eval harness
+- agentic evaluation
+- prompt/config optimization
+- evolutionary mutation loops
+- golden datasets
+- metric registries
+- constrained adapters
+- archive/convergence tracking
+dimensions:
+- overlap with local framework doc
+- maturity and adoption
+- adapter/interface design
+- metric and dataset model
+- optimizer/mutator design
+- trace/log feedback usage
+- guardrails against overfitting and self-evaluation
+- implementation reuse potential
+queries:
+- site:github.com agent eval harness LLM benchmark mutation prompt optimization archive convergence
+- site:github.com LLM eval harness prompt optimizer agent evaluation framework
+- site:arxiv.org agentic evaluation LLM agents benchmark harness
+- site:arxiv.org prompt optimization evaluation mutation LLM agents
+- GitHub promptfoo evals LLM prompt evaluation CI
+- GitHub confident-ai deepeval LLM evaluation framework
+- GitHub UKGovernmentBEIS inspect_ai LLM evals framework agents
+- GitHub stanfordnlp DSPy prompt optimization evaluation teleprompter
+- arxiv DSPy Compiling Declarative Language Model Calls prompt optimization
+- arxiv TextGrad Automatic Differentiation via Text optimization prompts
+- arxiv OPRO Optimization by PROmpting Large Language Models
+- arxiv GEPA reflective prompt evolution AI systems
+source_policy:
+  max_sources: 30
+  prefer_primary: true
+  allow_browser: true
+  allow_scrapling: true
+unknowns: []
+unknowns:
+- Whether the target runtime should become a library, CLI, or service first.
+- Whether MUCi/RAG is the first adapter target or only an example.
+- Required budget limits for optimization loops.
+- Whether optimization should mutate only prompts/configs in v1 or also code/control-flow later.
