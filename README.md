@@ -147,8 +147,11 @@ Evidence strength behind this mode, so it isn't read as more proven than it is:
 | SWE-bench, SWE-agent | solid — replicated, widely used benchmark substrate |
 | DSPy, GEPA | solid — mature, production-used optimizers |
 | Darwin Godel Machine | directional — real results, but extreme compute cost |
+| [Self-Harness](https://arxiv.org/abs/2606.09498) | directional — most concrete loop mechanics (editable surfaces, causal weakness mining, dual acceptance), tested across three base models |
 | TDAD | speculative — single 2026 preprint, 10-instance subset for its headline number |
 | Kitchen Loop | speculative — single 2026 preprint, unreplicated |
+
+The architecture's core rule — evaluator and permission control live outside the loop that evolves the system — is independently endorsed by [Lilian Weng's harness-engineering survey (Jul 2026)](https://lilianweng.github.io/posts/2026-07-04-harness/).
 
 Full safeguards, phasing, and the archive/rollback design live in [Golden_Quality_Setup.md § Coding Agent Patch Mode](Golden_Quality_Setup.md#coding-agent-patch-mode) — treated there as **deferred, contingent on Mode A proving ROI**, not a parallel effort.
 
@@ -407,6 +410,10 @@ Key external references:
 - SICA: https://arxiv.org/html/2504.15228v2
 - Huxley-Godel Machine: https://arxiv.org/abs/2510.21614
 - Kitchen Loop: https://arxiv.org/abs/2603.25697
+- Weng, "Harness Engineering for Self-Improvement" (Jul 2026): https://lilianweng.github.io/posts/2026-07-04-harness/
+- Self-Harness: https://arxiv.org/abs/2606.09498
+- STOP: https://arxiv.org/abs/2310.02304
+- ShinkaEvolve: https://arxiv.org/abs/2509.19349
 
 ## Current Status
 

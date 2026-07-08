@@ -306,7 +306,7 @@ Hard gates for coding agents:
 - hidden tests unchanged
 - guardrails unchanged
 - archive unchanged
-- no forbidden files changed
+- no files changed outside the declared editable surfaces (allowlist, per Self-Harness — see Coding Agent Patch Mode; anything not explicitly editable is off-limits by default)
 - unit tests pass before benchmark eval
 - repeated failures trigger rollback to best snapshot
 
@@ -331,6 +331,8 @@ The mutator must never see:
 - hidden redteam cases
 - final deployment thresholds
 - secret judge prompts
+
+**Known risk — the mutator is only as good as its base model.** [STOP](https://arxiv.org/abs/2310.02304) (Zelikman et al. 2023) showed that a recursive self-improvement loop *improved* results with GPT-4 but *degraded* them with weaker models: the same loop, run by a model too weak to reason about the mechanism it is editing, does not just improve more slowly — it actively degrades results. The recursive structure alone guarantees nothing. Practical consequence: the manual mutation baseline (Implementation Order, step 7) is not only a cost benchmark — it is also the test of whether the chosen base model is capable enough to run the mutator at all. If the mutator loses to the manual baseline, "wait for a stronger model" is a legitimate answer.
 
 The mutator should propose one to three candidates per iteration and include a hypothesis for each candidate.
 
@@ -376,6 +378,8 @@ Each archive event should include:
 
 The archive is not just bookkeeping. It is what prevents repeated failed mutations and allows later analysis of why a config won.
 
+How "prevents repeated failed mutations" actually works — until now this doc claimed the purpose without the mechanism. [ShinkaEvolve](https://arxiv.org/abs/2509.19349) (Lange et al. 2025) supplies one: **novelty rejection**. Before a proposed candidate is evaluated, compare it (embedding-based similarity over the config/patch text) against the existing population in the archive; candidates too similar to something already tried are rejected without spending an eval run. This does two things at once: it saves eval budget on near-duplicates, and it counteracts **diversity collapse** — the tendency of evolutionary loops to converge on variants of the same solution, flagged as an open problem in [Weng's 2026 survey](https://lilianweng.github.io/posts/2026-07-04-harness/). Implementation note: this is a pre-eval filter in the control plane, not a mutator feature — the mutator should not know the rejection threshold, or it will learn to game it.
+
 For coding-agent patch loops, archive lineage matters even more. Store:
 
 - repo snapshot
@@ -390,6 +394,7 @@ For coding-agent patch loops, archive lineage matters even more. Store:
 - parent snapshot
 - best snapshot
 - mutation rationale
+- causal failure record: verifier-level outcome + the agent behavior that caused it (from the trace) + the abstract failure mechanism — per Self-Harness's weakness mining, outcomes alone (timeout, missing artifact) are ambiguous across different root causes
 
 Huxley-Godel Machine adds a useful refinement: do not only track the best current node. Track which lineage or clade has the best future improvement potential.
 
@@ -465,8 +470,11 @@ Evidence strength for the claims below, since some of the strongest-sounding num
 | SWE-bench, SWE-agent | solid | replicated, widely used benchmark substrate |
 | Darwin Godel Machine | directional | real reported gains (20%→50% SWE-bench), but very high compute cost, limited independent replication |
 | Huxley-Godel Machine | directional | extends DGM's archive concept, recent (2026) |
+| [Self-Harness](https://arxiv.org/abs/2606.09498) (Zhang et al. 2026) | directional | tested across three base models on Terminal-Bench-2; the loop design (weakness mining, bounded proposals, dual acceptance) is the most concrete mechanism description available |
 | TDAD | speculative | single 2026 preprint; its headline 12%→60% resolution figure is measured on a **10-instance subset**, where a handful of tasks swing the result |
 | Kitchen Loop | speculative | single 2026 preprint, unreplicated, cited here mainly as a design counterweight |
+
+Independent endorsement of this architecture: [Lilian Weng's harness-engineering survey (Jul 2026)](https://lilianweng.github.io/posts/2026-07-04-harness/) reaches the same conclusion from the research side — *"the evaluator and permission control should likely sit outside the loop that evolves harness, with held-out tests, trace audits, and human review at decision points."* That is this repo's eval control plane, guardrail isolation, and humans-move-up-the-stack position, derived independently. The same survey notes the binding constraint of the whole method family: evolutionary/self-improvement loops only work where candidate fitness is fast and objective to evaluate — which is why the eval system, not the agent, is the durable asset.
 
 This is the closest match to Dom's original point: an eval system helps a coding agent reach a baseline by repeatedly producing patches.
 
@@ -490,7 +498,13 @@ Coding agent = patch producer
 Guardrail layer = protects evaluator, hidden tests, archive, and safety rules
 ```
 
-SICA and Darwin Godel Machine support the stronger version where the agent edits its own scaffold. Huxley-Godel Machine refines the archive concept by optimizing for clade metaproductivity: the expected future performance of a lineage, not only the score of the current node.
+**Self-Harness** ([Zhang et al. 2026](https://arxiv.org/abs/2606.09498)) runs the same kind of loop and contributes the three most precise mechanisms so far. All three should be adopted here:
+
+1. **Editable surfaces (allowlist instead of blocklist).** Instead of telling the agent what it must *not* touch ("don't patch the evaluator"), the proposer is handed an explicit list of surfaces it *may* edit. Everything not on the list is off-limits by default. This is strictly safer than our current forbidden-files formulation: a blocklist fails open when someone forgets to list a file, an allowlist fails closed.
+2. **Causal weakness mining.** Two failed runs can show the identical verifier outcome — say, a timeout or a missing artifact — for completely different underlying reasons. So failure records must capture three levels: the verifier-level outcome, the agent behavior that caused it (from the trace), and the abstract mechanism behind it. Clustering failures on outcomes alone produces wrong fix hypotheses. This is also an independent argument for the trace-first design: without traces, causal mining is impossible.
+3. **Dual acceptance rule.** A proposed edit is merged only if it shows no regression on **both** a held-in split (does it fix the mined weakness?) and a held-out split (does it break anything else?). One improvement is not enough; one regression on either split is disqualifying. This is our release-gate philosophy expressed as a per-edit accept rule.
+
+SICA and Darwin Godel Machine support the stronger version where the agent edits its own scaffold. Huxley-Godel Machine refines the archive concept by optimizing for clade metaproductivity: the expected future performance of a lineage, not only the score of the current node. [Meta-Harness](https://arxiv.org/abs/2603.28052) (Lee et al. 2026) goes one level up — a harness for optimizing harnesses — and outputs candidates on the Pareto frontier, which independently confirms the Pareto-selection choice in the Composite Score section.
 
 Kitchen Loop adds the important counterweight: do not optimize only for a benchmark score. Define a specification surface and regression oracle so the loop converges toward intended product behavior rather than Goodharting a proxy metric.
 
@@ -520,3 +534,8 @@ Phase 4: DGM/HGM-style open-ended self-improvement with lineage archive
 - SICA: https://arxiv.org/html/2504.15228v2
 - Huxley-Godel Machine: https://arxiv.org/abs/2510.21614
 - Kitchen Loop: https://arxiv.org/abs/2603.25697
+- Weng, "Harness Engineering for Self-Improvement" (Jul 2026): https://lilianweng.github.io/posts/2026-07-04-harness/
+- Self-Harness (Zhang et al. 2026): https://arxiv.org/abs/2606.09498
+- Meta-Harness (Lee et al. 2026): https://arxiv.org/abs/2603.28052
+- STOP (Zelikman et al. 2023): https://arxiv.org/abs/2310.02304
+- ShinkaEvolve (Lange et al. 2025): https://arxiv.org/abs/2509.19349
