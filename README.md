@@ -40,7 +40,10 @@ Read these first:
 4. [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md)  
    The audit checklist for deciding whether a generated eval dataset is actually trustworthy.
 
-5. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)  
+5. [Continual_Learning_Loop.md](Continual_Learning_Loop.md)
+   The production failure cluster -> hypothesis -> eval case -> gated fix loop.
+
+6. [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md)
    The sourced research report behind the generic eval/runtime architecture.
 
 For coding-agent self-improvement, read this too:
@@ -157,6 +160,7 @@ Full safeguards, phasing, and the archive/rollback design live in [Golden_Qualit
 | [Golden_Quality_Setup.md](Golden_Quality_Setup.md) | Best recommended architecture and implementation order |
 | [EvalSpec_Guide.md](EvalSpec_Guide.md) | Portable spec for generating QA and eval datasets |
 | [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md) | Audit checklist for dataset trustworthiness |
+| [Continual_Learning_Loop.md](Continual_Learning_Loop.md) | Operating loop for turning production failure clusters into eval-backed fixes |
 | [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) | Original German framework document |
 | [generic_eval_harness_architecture.png](generic_eval_harness_architecture.png) | Architecture diagram |
 | [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) | Sourced research synthesis |
@@ -177,12 +181,13 @@ When an agent works in this repo:
 2. Read [Generisches_Eval_Harness_Framework.md](Generisches_Eval_Harness_Framework.md) for the original design intent.
 3. Read [EvalSpec_Guide.md](EvalSpec_Guide.md) before generating QA cases, golden datasets, or benchmark tasks.
 4. Use [Dataset_Quality_Checklist.md](Dataset_Quality_Checklist.md) before calling a dataset good.
-5. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
-6. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
-7. Use [research/2026-07-07-eval-dataset-quality/report.md](research/2026-07-07-eval-dataset-quality/report.md) before making claims about dataset quality.
-8. Treat guardrail isolation as non-negotiable.
-9. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
-10. If adding implementation code, keep the first version adapter-first and small.
+5. Use [Continual_Learning_Loop.md](Continual_Learning_Loop.md) when turning production traces, logs, or support failures into eval-backed improvements.
+6. Use [research/2026-07-07-agentic-eval-runtime/report.md](research/2026-07-07-agentic-eval-runtime/report.md) before making claims about generic eval/runtime tools.
+7. Use [research/2026-07-07-coding-agent-patch-loop/report.md](research/2026-07-07-coding-agent-patch-loop/report.md) before making claims about self-improving coding agents.
+8. Use [research/2026-07-07-eval-dataset-quality/report.md](research/2026-07-07-eval-dataset-quality/report.md) before making claims about dataset quality.
+9. Treat guardrail isolation as non-negotiable.
+10. Do not implement a generic eval framework from scratch without checking whether DeepEval, Inspect AI, RAGAS, ARES, DSPy, GEPA, promptfoo, SWE-bench, TDAD, or SICA already cover the need.
+11. If adding implementation code, keep the first version adapter-first and small.
 
 Useful first implementation target:
 

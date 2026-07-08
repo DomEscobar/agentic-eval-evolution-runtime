@@ -172,6 +172,26 @@ Production policy:
 
 The eval loop itself is unaffected by any of this: it runs offline against constructed golden cases containing no real user data, so eval runs always trace at full depth, content included.
 
+### Production-to-Eval Learning Loop
+
+The Replit-style continual-learning lesson is an operating loop, not a different architecture: production failures should become eval pressure.
+
+```text
+Production traces / logs
+  -> failure clusters
+  -> human-approved hypothesis
+  -> new regression case or EvalSpec update
+  -> candidate patch or config mutation
+  -> validation + regression + holdout gates
+  -> human review
+  -> limited launch
+  -> archive lineage
+```
+
+This keeps the eval control plane in charge. Observability tools identify clusters; they do not decide promotion. Agents can propose config mutations or patches; they do not own hidden tests, guardrails, or rollout.
+
+The detailed operating procedure lives in [Continual_Learning_Loop.md](Continual_Learning_Loop.md).
+
 ## Dataset Layout
 
 Use four datasets, not one.
